@@ -56,22 +56,22 @@ RSpec.configure do |config|
         f.write "# #{action}\n\n"
 
         # Request
-        request_body = request.body.read
+        request_body = request.env["action_dispatch.request.request_parameters"]
         authorization_header = request.env ? request.env['Authorization'] : request.headers['Authorization']
 
         if request_body.present? || authorization_header.present?
           f.write "+ Request #{request.content_type}\n\n"
 
           # Request Headers
-          if authorization_header.present?
-            f.write "+ Headers\n\n".indent(4)
-            f.write "Authorization: #{authorization_header}\n\n".indent(12)
-          end
+          # if authorization_header.present?
+          #   f.write "+ Headers\n\n".indent(4)
+          #   f.write "Authorization: #{authorization_header}\n\n".indent(12)
+          # end
 
           # Request Body
-          if request_body.present? && request.content_type == 'application/json'
-            f.write "+ Body\n\n".indent(4) if authorization_header
-            f.write "#{JSON.pretty_generate(JSON.parse(request_body))}\n\n".indent(authorization_header ? 12 : 8)
+          if request_body.present?# && request.content_type == 'application/json'
+            f.write "+ Body\n\n".indent(4)# if authorization_header
+            f.write "#{JSON.pretty_generate(JSON.parse(JSON.pretty_generate(request_body)))}\n\n".indent(authorization_header ? 12 : 8)
           end
         end
 
@@ -81,7 +81,7 @@ RSpec.configure do |config|
         if response.body.present? && response.content_type =~ /application\/json/
           f.write "#{JSON.pretty_generate(JSON.parse(response.body))}\n\n".indent(8)
         end
-      end unless response.status == 401 || response.status == 403 || response.status == 301
+      end unless response.status =~ /4\d\d/ || response.status =~ /3\d\d/
     end
   end
 end
