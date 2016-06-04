@@ -55,6 +55,13 @@ RSpec.configure do |config|
         # Resource & Action
         f.write "# #{action}\n\n"
 
+        f.write "description blah blah blah\n\n"
+
+        collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
+        f.write "## #{collection.capitalize} collection [/#{collection}]\n\n"
+
+        f.write "### #{collection.capitalize} [#{request.method}]\n\n"
+
         # Request
         request_body = request.env["action_dispatch.request.request_parameters"]
         authorization_header = request.env ? request.env['Authorization'] : request.headers['Authorization']
