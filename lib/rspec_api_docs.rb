@@ -15,7 +15,16 @@ RSpec.configure do |config|
     end
   end
 
-  config.after(:each, type: :api) do |example|
+  config.after(:each) do |example|
+    # exit unless this is under api/v*
+    next unless example.metadata[:file_path].match(/api\/v\d*/)
+    begin
+      next unless request && request.try(:symbolized_path_parameters)
+    rescue => e
+      # Continue anyway
+      next
+    end
+
     if response
       example_group = example.metadata[:example_group]
       example_groups = []
@@ -25,10 +34,8 @@ RSpec.configure do |config|
         example_group = example_group[:example_group]
       end
 
-      # action = example_groups[-2][:description_args].first if example_groups[-2]
-      # example_groups[-1][:description_args].first.match(/(\w+)\sRequests/)
-      file_name = example_groups[0][:description].match(/GET \/(.*)/)[1].gsub(/\//, '_')
-      action = example_groups[0][:description]
+      file_name = request.symbolized_path_parameters[:controller].gsub(/\//, '_').gsub('api_', '')
+      action = "#{request.request_method} #{request.symbolized_path_parameters[:controller]}"
 
       if defined? Rails
         file = File.join(Rails.root, "/api_docs/#{file_name}.txt")
