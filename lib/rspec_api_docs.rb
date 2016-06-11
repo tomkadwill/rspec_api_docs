@@ -47,20 +47,19 @@ RSpec.configure do |config|
         if File.zero?(File.join(Rails.root, "/api_docs/#{file_name}.txt"))
           f.write "FORMAT: 1A\n"
           f.write "HOST: https://qa1.google.co.uk/api\n\n"
+
+          f.write "# #{action}\n\n"
+
+          f.write "description blah blah blah\n\n"
         end
 
         # skip if the action is already defined
         next if File.read(File.join(Rails.root, "/api_docs/#{file_name}.txt")).include?(action)
 
-        # Resource & Action
-        f.write "# #{action}\n\n"
-
-        f.write "description blah blah blah\n\n"
-
         collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
         f.write "## #{collection.capitalize} collection [/#{collection}]\n\n"
 
-        f.write "### #{collection.capitalize} [#{request.method}]\n\n"
+        f.write "### #{collection.capitalize} #{request.method.downcase} [#{request.method}]\n\n"
 
         # Request
         request_body = request.env["action_dispatch.request.request_parameters"]
