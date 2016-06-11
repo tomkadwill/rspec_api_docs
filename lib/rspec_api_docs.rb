@@ -35,7 +35,10 @@ RSpec.configure do |config|
       end
 
       file_name = request.symbolized_path_parameters[:controller].gsub(/\//, '_').gsub('api_', '')
-      action = "#{request.request_method} #{request.symbolized_path_parameters[:controller]}"
+
+      id_symbol = request.symbolized_path_parameters.keys.find{|k| k.match /id/}
+      optional_param = request.symbolized_path_parameters[id_symbol] ? "/{:#{id_symbol}}" : ""
+      action = "#{request.request_method} #{request.symbolized_path_parameters[:controller]}#{optional_param}"
 
       if defined? Rails
         file = File.join(Rails.root, "/api_docs/#{file_name}.txt")
@@ -43,12 +46,13 @@ RSpec.configure do |config|
         file = File.join(File.expand_path('.'), "/api_docs/#{file_name}.txt")
       end
 
+      collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
       File.open(file, 'a') do |f|
         if File.zero?(File.join(Rails.root, "/api_docs/#{file_name}.txt"))
           f.write "FORMAT: 1A\n"
           f.write "HOST: https://qa1.google.co.uk/api\n\n"
 
-          f.write "# #{action}\n\n"
+          f.write "# #{collection.capitalize}\n\n"
 
           f.write "description blah blah blah\n\n"
         end
@@ -56,10 +60,9 @@ RSpec.configure do |config|
         # skip if the action is already defined
         next if File.read(File.join(Rails.root, "/api_docs/#{file_name}.txt")).include?(action)
 
-        collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
         f.write "## #{collection.capitalize} collection [/#{collection}]\n\n"
 
-        f.write "### #{collection.capitalize} #{request.method.downcase} [#{request.method}]\n\n"
+        f.write "### #{collection.capitalize} #{request.symbolized_path_parameters[:action].capitalize} [#{request.method}]\n\n"
 
         # Request
         request_body = request.env["action_dispatch.request.request_parameters"]
