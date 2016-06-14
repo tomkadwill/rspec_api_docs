@@ -10,8 +10,14 @@ RSpec.configure do |config|
 
     Dir.mkdir(api_docs_folder_path) unless Dir.exists?(api_docs_folder_path)
 
-    Dir.glob(File.join(api_docs_folder_path, '*')).each do |f|
-      File.delete(f)
+    files_to_remove = config.files_to_run == [] ? Dir.glob(File.join(api_docs_folder_path, '*')) : config.files_to_run
+
+    files_to_remove.each do |f|
+      next unless f.match(/api\/v*.\/.*/)
+
+      file = f.match(/api\/v*.\/.*/)[0].gsub('/', '_').gsub('api_', '').gsub('_controller_test.rb', '.txt')
+      file = "api_docs/#{file}"
+      File.delete(file) if File.exists?(file)
     end
   end
 
