@@ -1,3 +1,4 @@
+require 'rspec/core'
 require "rspec_api_docs/version"
 
 RSpec.configure do |config|
@@ -76,12 +77,6 @@ RSpec.configure do |config|
 
         if request_body.present? || authorization_header.present?
           f.write "+ Request #{request.content_type}\n\n"
-
-          # Request Headers
-          # if authorization_header.present?
-          #   f.write "+ Headers\n\n".indent(4)
-          #   f.write "Authorization: #{authorization_header}\n\n".indent(12)
-          # end
 
           # Request Body
           if request_body.present?# && request.content_type == 'application/json'
