@@ -1,19 +1,13 @@
 require 'rspec/core'
 require "rspec_api_docs/version"
+require "rspec_api_docs/dir"
+require "rspec_api_docs/file"
 
 RSpec.configure do |config|
   config.before(:suite) do
-    if defined? Rails
-      api_docs_folder_path = File.join(Rails.root, '/api_docs/')
-    else
-      api_docs_folder_path = File.join(File.expand_path('.'), '/api_docs/')
-    end
+    api_docs_folder_path = RspecApiDocs::Dir.find_or_create_api_docs_folder_in(Rails.root)
 
-    Dir.mkdir(api_docs_folder_path) unless Dir.exists?(api_docs_folder_path)
-
-    files_to_remove = config.files_to_run == [] ? Dir.glob(File.join(api_docs_folder_path, '*')) : config.files_to_run
-
-    files_to_remove.each do |f|
+    RspecApiDocs::File.files_to_remove(config.files_to_run, api_docs_folder_path).each do |f|
       next unless f.match(/api\/v*.\/.*/)
 
       file = f.match(/api\/v*.\/.*/)[0].gsub('/', '_').gsub('api_', '').gsub('_controller_test.rb', '.txt')
@@ -91,6 +85,7 @@ RSpec.configure do |config|
       end
     rescue => e
       # Just carry on as normal to that errors here don't iterfere with tests
+      Rails.logger.info "rspec_api_docs error: #{e}"
     end
   end
 end
