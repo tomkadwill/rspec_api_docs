@@ -44,6 +44,7 @@ RSpec.configure do |config|
         end
 
         collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
+        action_title = "#{collection.capitalize} #{request.symbolized_path_parameters[:action].capitalize} [#{request.method}]"
         File.open(file, 'a') do |f|
           if File.zero?(File.join(Rails.root, "/api_docs/#{file_name}.txt"))
             f.write "FORMAT: 1A\n"
@@ -55,11 +56,11 @@ RSpec.configure do |config|
           end
 
           # skip if the action is already defined
-          next if File.read(File.join(Rails.root, "/api_docs/#{file_name}.txt")).include?(action)
+          next if File.read(File.join(Rails.root, "/api_docs/#{file_name}.txt")).include?(action_title)
 
           f.write "## #{collection.capitalize} collection [/#{collection}]\n\n"
 
-          f.write "### #{collection.capitalize} #{request.symbolized_path_parameters[:action].capitalize} [#{request.method}]\n\n"
+          f.write "### #{action_title}\n\n"
 
           # Request
           request_body = request.env["action_dispatch.request.request_parameters"]
