@@ -1,24 +1,23 @@
 require 'rspec/core'
 require "rspec_api_docs/version"
 require "rspec_api_docs/dir"
-require "rspec_api_docs/file"
 
 RSpec.configure do |config|
   config.before(:suite) do
+    files_to_run = config.instance_variable_get(:@files_or_directories_to_run)
+    next unless files_to_run == ["test/controllers/api/"]
+
     api_docs_folder_path = RspecApiDocs::Dir.find_or_create_api_docs_folder_in(Rails.root)
 
-    RspecApiDocs::File.files_to_remove(config.files_to_run, api_docs_folder_path).each do |f|
-      next unless f.match(/api\/v*.\/.*/)
-
-      file = f.match(/api\/v*.\/.*/)[0].gsub('/', '_').gsub('api_', '').gsub('_controller_test.rb', '.txt')
-      file = "api_docs/#{file}"
-      File.delete(file) if File.exists?(file)
-    end
+    file = File.join(Rails.root, "apiary.apib")
+    File.delete(file) if File.exists?(file)
   end
 
   config.after(:each) do |example|
     begin
       # exit unless this is under api/v*
+      files_to_run = config.instance_variable_get(:@files_or_directories_to_run)
+      next unless files_to_run == ["test/controllers/api/"]
       next unless example.metadata[:file_path].match(/api\/v\d*/)
       next unless request && request.try(:symbolized_path_parameters)
 
@@ -37,16 +36,14 @@ RSpec.configure do |config|
         optional_param = request.symbolized_path_parameters[id_symbol] ? "/{:#{id_symbol}}" : ""
         action = "#{request.request_method} #{request.symbolized_path_parameters[:controller]}#{optional_param}"
 
-        if defined? Rails
-          file = File.join(Rails.root, "/api_docs/#{file_name}.txt")
-        else
-          file = File.join(File.expand_path('.'), "/api_docs/#{file_name}.txt")
-        end
+        file = File.join(Rails.root, "apiary.apib")
 
         collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
+        version_and_collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)(.*)/)[3]
+
         action_title = "#{collection.capitalize} #{request.symbolized_path_parameters[:action].capitalize} [#{request.method}]"
         File.open(file, 'a') do |f|
-          if File.zero?(File.join(Rails.root, "/api_docs/#{file_name}.txt"))
+          if File.zero?(File.join(file))
             f.write "FORMAT: 1A\n"
             f.write "HOST: https://qa1.google.co.uk/api\n\n"
 
@@ -56,9 +53,9 @@ RSpec.configure do |config|
           end
 
           # skip if the action is already defined
-          next if File.read(File.join(Rails.root, "/api_docs/#{file_name}.txt")).include?(action_title)
+          next if File.read(File.join(file)).include?(action_title)
 
-          f.write "## #{collection.capitalize} collection [/#{collection}]\n\n"
+          f.write "## #{collection.capitalize} collection [#{version_and_collection}]\n\n"
 
           f.write "### #{action_title}\n\n"
 
