@@ -5,7 +5,7 @@ require "rspec_api_docs/dir"
 RSpec.configure do |config|
   config.before(:suite) do
     files_to_run = config.instance_variable_get(:@files_or_directories_to_run)
-    next unless files_to_run == ["test/controllers/api/"]
+    next unless files_to_run == ["spec/controllers/api/"]
 
     api_docs_folder_path = RspecApiDocs::Dir.find_or_create_api_docs_folder_in(Rails.root)
 
@@ -17,7 +17,7 @@ RSpec.configure do |config|
     begin
       # exit unless this is under api/v*
       files_to_run = config.instance_variable_get(:@files_or_directories_to_run)
-      next unless files_to_run == ["test/controllers/api/"]
+      next unless files_to_run == ["spec/controllers/api/"]
       next unless example.metadata[:file_path].match(/api\/v\d*/)
       next unless request && request.try(:symbolized_path_parameters)
 
