@@ -5,8 +5,10 @@ require "rspec_api_docs/helper"
 RSpec.configure do |config|
   config.before(:suite) do
     next unless RspecApiDocs::Helper.running_api_specs?(config)
-
     file = RspecApiDocs::Helper.file
+
+    # Delete and re-create the file each time
+    File.delete(file) if File.exists?(file)
     File.new(file,  "w+") unless File.exists?(file)
   end
 
@@ -17,21 +19,13 @@ RSpec.configure do |config|
       next unless request && request.try(:symbolized_path_parameters)
 
       if response
-        example_group = example.metadata[:example_group]
-        example_groups = []
-
-        while example_group
-          example_groups << example_group
-          example_group = example_group[:example_group]
-        end
-
         file_name = request.symbolized_path_parameters[:controller].gsub(/\//, '_').gsub('api_', '')
 
         id_symbol = request.symbolized_path_parameters.keys.find{|k| k.match /id/}
         optional_param = request.symbolized_path_parameters[id_symbol] ? "/{:#{id_symbol}}" : ""
         action = "#{request.request_method} #{request.symbolized_path_parameters[:controller]}#{optional_param}"
 
-        file = RspecApiDocs::Dir.file
+        file = RspecApiDocs::Helper.file
 
         collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
         version_and_collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)(.*)/)[3]
@@ -62,8 +56,8 @@ RSpec.configure do |config|
             f.write "+ Request #{request.content_type}\n\n"
 
             # Request Body
-            if request_body.present?# && request.content_type == 'application/json'
-              f.write "+ Body\n\n".indent(4)# if authorization_header
+            if request_body.present?
+              f.write "+ Body\n\n".indent(4)
               f.write "#{JSON.pretty_generate(JSON.parse(JSON.pretty_generate(request_body)))}\n\n".indent(authorization_header ? 12 : 8)
             end
           end
