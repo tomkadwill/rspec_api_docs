@@ -7,7 +7,7 @@ RSpec.configure do |config|
     next unless RspecApiDocs::Helper.running_api_specs?(config)
 
     file = RspecApiDocs::Helper.file
-    File.delete(file) if File.exists?(file)
+    File.new(file,  "w+") unless File.exists?(file)
   end
 
   config.after(:each) do |example|
