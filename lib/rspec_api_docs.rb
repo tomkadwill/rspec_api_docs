@@ -1,23 +1,18 @@
 require 'rspec/core'
 require "rspec_api_docs/version"
-require "rspec_api_docs/dir"
+require "rspec_api_docs/helper"
 
 RSpec.configure do |config|
   config.before(:suite) do
-    files_to_run = config.instance_variable_get(:@files_or_directories_to_run)
-    next unless files_to_run == ["spec/controllers/api/"]
+    next unless RspecApiDocs::Helper.running_api_specs?(config)
 
-    api_docs_folder_path = RspecApiDocs::Dir.find_or_create_api_docs_folder_in(Rails.root)
-
-    file = File.join(Rails.root, "apiary.apib")
+    file = RspecApiDocs::Helper.file
     File.delete(file) if File.exists?(file)
   end
 
   config.after(:each) do |example|
     begin
-      # exit unless this is under api/v*
-      files_to_run = config.instance_variable_get(:@files_or_directories_to_run)
-      next unless files_to_run == ["spec/controllers/api/"]
+      next unless RspecApiDocs::Helper.running_api_specs?(config)
       next unless example.metadata[:file_path].match(/api\/v\d*/)
       next unless request && request.try(:symbolized_path_parameters)
 
@@ -36,7 +31,7 @@ RSpec.configure do |config|
         optional_param = request.symbolized_path_parameters[id_symbol] ? "/{:#{id_symbol}}" : ""
         action = "#{request.request_method} #{request.symbolized_path_parameters[:controller]}#{optional_param}"
 
-        file = File.join(Rails.root, "apiary.apib")
+        file = RspecApiDocs::Dir.file
 
         collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
         version_and_collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)(.*)/)[3]
