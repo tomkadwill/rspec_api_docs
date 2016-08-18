@@ -20,6 +20,16 @@ Or install it yourself as:
 
     $ gem install rspec_api_docs
 
+Include the `RspecApiDocs` Module inside your `spec_helper.rb`. Eg:
+
+```ruby
+# spec_helper.rb
+
+RSpec.configure do |config|
+  config.include RspecApiDocs
+end
+```
+
 ## Usage
 
 To generate documentation, just run your API tests. eg:
