@@ -6,6 +6,7 @@ require "rspec_api_docs/example"
 RSpec.configure do |config|
   config.before(:suite) do
     next unless RspecApiDocs::Helper.running_api_specs?(config)
+
     file = RspecApiDocs::Helper.file
 
     # Delete and re-create the file each time
@@ -14,8 +15,7 @@ RSpec.configure do |config|
   end
 
   config.after(:each) do |example|
-    next unless RspecApiDocs::Helper.running_api_specs?(config)
-    next unless example.metadata[:file_path].match(/api\/v\d*/)
+    next unless RspecApiDocs::Helper.running_api_specs?(config, example)
 
     begin
       RspecApiDocs::Example.new(

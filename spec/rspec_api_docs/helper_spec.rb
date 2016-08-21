@@ -15,15 +15,28 @@ describe RspecApiDocs::Helper do
 
   describe '.running_api_specs?' do
     let(:config) { double(:config) }
+    let(:example) { double(:example, metadata: {file_path: "api/v1/"}) }
 
     it 'returns true if running api specs' do
       config.instance_variable_set(:@files_or_directories_to_run, ["spec/controllers/api/"])
-      expect(described_class.running_api_specs?(config)).to eq(true)
+      expect(described_class.running_api_specs?(config, example)).to eq(true)
     end
 
     it 'returns false if not running api specs' do
       config.instance_variable_set(:@files_or_directories_to_run, ["spec/"])
-      expect(described_class.running_api_specs?(config)).to eq(false)
+      expect(described_class.running_api_specs?(config, example)).to eq(false)
+    end
+
+    describe 'without passing example param' do
+      it 'returns true if running api specs' do
+        config.instance_variable_set(:@files_or_directories_to_run, ["spec/controllers/api/"])
+        expect(described_class.running_api_specs?(config)).to eq(true)
+      end
+
+      it 'returns false if not running api specs' do
+        config.instance_variable_set(:@files_or_directories_to_run, ["spec/"])
+        expect(described_class.running_api_specs?(config)).to eq(false)
+      end
     end
   end
 

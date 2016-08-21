@@ -12,7 +12,7 @@ class RspecApiDocs::Example
   end
 
   def generate
-    return unless request && request.try(:path_parameters)
+    return unless has_request?
 
     if response
       file_name = request.path_parameters[:controller].gsub(/\//, '_').gsub('api_', '')
@@ -64,5 +64,11 @@ class RspecApiDocs::Example
         end
       end unless response.status.to_s =~ /4\d\d/ || response.status.to_s =~ /3\d\d/
     end
+  end
+
+  private
+
+  def has_request?
+    request && request.try(:path_parameters)
   end
 end
