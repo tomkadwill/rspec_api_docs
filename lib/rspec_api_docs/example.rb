@@ -15,25 +15,8 @@ class RspecApiDocs::Example
     return unless has_request?
 
     if response
-      file_name = request.path_parameters[:controller].gsub(/\//, '_').gsub('api_', '')
-
-      id_symbol = request.path_parameters.keys.find{|k| k.match /id/}
-      optional_param = request.path_parameters[id_symbol] ? "/{:#{id_symbol}}" : ""
-      action = "#{request.request_method} #{request.path_parameters[:controller]}#{optional_param}"
-
-      collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
-      version_and_collection = action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)(.*)/)[3]
-
-      action_title = "#{collection.capitalize} #{request.path_parameters[:action].capitalize} [#{request.method}]"
       File.open(file, 'a') do |f|
-        if File.zero?(File.join(file))
-          f.write "FORMAT: 1A\n"
-          f.write "HOST: https://qa1.google.co.uk/api\n\n"
-
-          f.write "# #{collection.capitalize}\n\n"
-
-          f.write "description blah blah blah\n\n"
-        end
+        write_title(f) if File.zero?(File.join(file))
 
         # skip if the action is already defined
         return if File.read(File.join(file)).include?(action_title)
@@ -70,5 +53,33 @@ class RspecApiDocs::Example
 
   def has_request?
     request && request.try(:path_parameters)
+  end
+
+  def action
+    id_symbol = request.path_parameters.keys.find{|k| k.match /id/}
+    optional_param = request.path_parameters[id_symbol] ? "/{:#{id_symbol}}" : ""
+
+    "#{request.request_method} #{request.path_parameters[:controller]}#{optional_param}"
+  end
+
+  def collection
+    action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)\/v\d*\/(.*)/)[3]
+  end
+
+  def version_and_collection
+    action.match(/(POST|GET|PATCH|DELETE) (portal\/api|api)(.*)/)[3]
+  end
+
+  def action_title
+    "#{collection.capitalize} #{request.path_parameters[:action].capitalize} [#{request.method}]"
+  end
+
+  def write_title(file)
+    file.write "FORMAT: 1A\n"
+    file.write "HOST: https://qa1.google.co.uk/api\n\n"
+
+    file.write "# #{collection.capitalize}\n\n"
+
+    file.write "description blah blah blah\n\n"
   end
 end
