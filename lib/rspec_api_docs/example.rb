@@ -18,16 +18,9 @@ class RspecApiDocs::Example
       File.open(file, 'a') do |f|
         write_title(f) if File.zero?(File.join(file))
 
-        # skip if the action is already defined
-        return if File.read(File.join(file)).include?(action_title)
+        return if action_already_defined?
 
-        f.write "## #{collection.capitalize} collection [#{version_and_collection}]\n\n"
-
-        f.write "### #{action_title}\n\n"
-
-        # Request
-        request_body = request.env["action_dispatch.request.request_parameters"]
-        authorization_header = request.env ? request.env['Authorization'] : request.headers['Authorization']
+        write_collection_and_title(f)
 
         if request_body.present? || authorization_header.present?
           f.write "+ Request #{request.content_type}\n\n"
@@ -74,6 +67,18 @@ class RspecApiDocs::Example
     "#{collection.capitalize} #{request.path_parameters[:action].capitalize} [#{request.method}]"
   end
 
+  def action_already_defined?
+    File.read(File.join(file)).include?(action_title)
+  end
+
+  def request_body
+    request.env["action_dispatch.request.request_parameters"]
+  end
+
+  def authorization_header
+    request.env ? request.env['Authorization'] : request.headers['Authorization']
+  end
+
   def write_title(file)
     file.write "FORMAT: 1A\n"
     file.write "HOST: https://qa1.google.co.uk/api\n\n"
@@ -81,5 +86,10 @@ class RspecApiDocs::Example
     file.write "# #{collection.capitalize}\n\n"
 
     file.write "description blah blah blah\n\n"
+  end
+
+  def write_collection_and_title(f)
+    f.write "## #{collection.capitalize} collection [#{version_and_collection}]\n\n"
+    f.write "### #{action_title}\n\n"
   end
 end
