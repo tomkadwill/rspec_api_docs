@@ -14,31 +14,15 @@ class RspecApiDocs::Example
   def generate
     return unless has_request?
 
-    if response
+    if response_is_a_200?
       File.open(file, 'a') do |f|
-        write_title(f) if File.zero?(File.join(file))
-
         return if action_already_defined?
 
+        write_title(f) if File.zero?(File.join(file))
         write_collection_and_title(f)
-
-        if request_body.present? || authorization_header.present?
-          f.write "+ Request #{request.content_type}\n\n"
-
-          # Request Body
-          if request_body.present?
-            f.write "+ Body\n\n".indent(4)
-            f.write "#{JSON.pretty_generate(JSON.parse(JSON.pretty_generate(request_body)))}\n\n".indent(authorization_header ? 12 : 8)
-          end
-        end
-
-        # Response
-        f.write "+ Response #{response.status} #{response.content_type}\n\n"
-
-        if response.body.present? && response.content_type =~ /application\/json/
-          f.write "#{JSON.pretty_generate(JSON.parse(response.body))}\n\n".indent(8)
-        end
-      end unless response.status.to_s =~ /4\d\d/ || response.status.to_s =~ /3\d\d/
+        write_body(f) if request_body.present? || authorization_header.present?
+        write_response(f)
+      end
     end
   end
 
@@ -79,17 +63,39 @@ class RspecApiDocs::Example
     request.env ? request.env['Authorization'] : request.headers['Authorization']
   end
 
+  def response_was_not_200
+    response.status.to_s =~ /4\d\d/ || response.status.to_s =~ /3\d\d/
+  end
+
+  def response_is_a_200?
+    return false unless response
+
+    response.status.to_s =~ /2\d\d/
+  end
+
   def write_title(file)
     file.write "FORMAT: 1A\n"
     file.write "HOST: https://qa1.google.co.uk/api\n\n"
-
     file.write "# #{collection.capitalize}\n\n"
-
     file.write "description blah blah blah\n\n"
   end
 
   def write_collection_and_title(f)
     f.write "## #{collection.capitalize} collection [#{version_and_collection}]\n\n"
     f.write "### #{action_title}\n\n"
+  end
+
+  def write_body(f)
+    f.write "+ Request #{request.content_type}\n\n"
+    f.write "+ Body\n\n".indent(4)
+    f.write "#{JSON.pretty_generate(JSON.parse(JSON.pretty_generate(request_body)))}\n\n".indent(authorization_header ? 12 : 8)
+  end
+
+  def write_response(f)
+    f.write "+ Response #{response.status} #{response.content_type}\n\n"
+
+    if response.body.present? && response.content_type =~ /application\/json/
+      f.write "#{JSON.pretty_generate(JSON.parse(response.body))}\n\n".indent(8)
+    end
   end
 end
